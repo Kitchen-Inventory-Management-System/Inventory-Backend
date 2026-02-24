@@ -9,6 +9,8 @@ const app = express();
 app.use(cors());
 app.use(express.json()); 
 app.use('/auth', require('./routes/auth')); // Import auth routes
+// ROUTES
+app.use('/dashboard', require('./routes/middleware/dashboard'));
 // --- YOUR TEST ROUTE ---
 // When a browser asks for /test, this block of code runs.
 app.get('/test', async (req, res) => {
