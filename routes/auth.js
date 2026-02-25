@@ -1,7 +1,7 @@
-const express = require('express');
-const router = express.Router();
+const router = require("express").Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const jwtGenerator = require("../utils/jwtGenerator");
 require('dotenv').config(); // Make sure it can read your .env file!
 const pool = require('../db');
 
@@ -12,7 +12,7 @@ router.post('/register', async (req, res) => {
     const { email, password } = req.body;
 
     // 2. Check if the user already exists
-    const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+    const user = await pool.query("SELECT * FROM \"users\" WHERE email = $1", [email]);
     if (user.rows.length > 0) {
       return res.status(401).json("User already exists!");
     }
@@ -22,13 +22,18 @@ router.post('/register', async (req, res) => {
     const salt = await bcrypt.genSalt(saltRound);
     const bcryptPassword = await bcrypt.hash(password, salt);
 
-    // 4. Insert the new user (No username field here!)
+    // 4. Insert the new user 
     const newUser = await pool.query(
-      "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING id, email",
+      "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING *",
       [email, bcryptPassword]
     );
 
-    res.json({ message: "User registered successfully!", user: newUser.rows[0] });
+    // 5. Generating JWT token
+    // We use the ID from the brand-new row we just created
+    const token = jwtGenerator(newUser.rows[0].id);
+
+    // 6. Send the token back to the frontend
+    res.json({ token });
 
   } catch (err) {
     console.error(err.message);
@@ -56,13 +61,8 @@ router.post('/login', async (req, res) => {
     }
 
     // 4. If everything is good, create the JWT (the digital wristband)
-    const token = jwt.sign(
-      { user_id: user.rows[0].id }, // We pack their database ID inside the token
-      process.env.JWT_SECRET,       // We sign it with your secret key
-      { expiresIn: "1hr" }          // It expires in 1 hour for security
-    );
-
-    // 5. Hand the wristband to the user!
+    const token = jwtGenerator(user.rows[0].id);    // 5. Hand the wristband to the user!
+    
     res.json({ token });
 
   } catch (err) {
@@ -70,4 +70,5 @@ router.post('/login', async (req, res) => {
     res.status(500).send("Server Error during login");
   }
 });
+
 module.exports = router;
