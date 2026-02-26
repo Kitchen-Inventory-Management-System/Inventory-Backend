@@ -2,7 +2,7 @@ const router = require("express").Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const jwtGenerator = require("../utils/jwtGenerator");
-require('dotenv').config(); // Make sure it can read your .env file!
+require('dotenv').config(); // Make sure it can read .env file
 const pool = require('../db');
 
 // Registration Route: POST /auth/register
@@ -26,6 +26,19 @@ router.post('/register', async (req, res) => {
     const newUser = await pool.query(
       "INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING *",
       [email, bcryptPassword]
+    );
+
+    const newUserId = newUser.rows[0].id; // Grab the new ID to use for defaults
+
+    // 4.5 Setting default locations for the new user
+    await pool.query(
+      `INSERT INTO locations (name, "user_id") 
+      VALUES 
+        ('Fridge', $1),
+        ('Freezer', $1),
+        ('Pantry', $1),
+        ('Spice Rack', $1)`,
+      [newUserId]
     );
 
     // 5. Generating JWT token
@@ -70,5 +83,7 @@ router.post('/login', async (req, res) => {
     res.status(500).send("Server Error during login");
   }
 });
+
+// 
 
 module.exports = router;

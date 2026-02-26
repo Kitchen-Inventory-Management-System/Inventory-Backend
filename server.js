@@ -7,15 +7,19 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json()); 
-app.use('/auth', require('./routes/auth')); // Import auth routes
+app.use(express.json());
+
 // ROUTES
+app.use('/auth', require('./routes/auth')); // Import auth routes
 app.use('/dashboard', require('./routes/middleware/dashboard'));
-// --- YOUR TEST ROUTE ---
+app.use('/locations', require('./routes/locations'));
+
+// --- TEST ROUTE ---
 // When a browser asks for /test, this block of code runs.
 app.get('/test', async (req, res) => {
   try {
-    // This asks your Supabase database for the current time
+
+    // This asks Supabase database for the current time
     const dbTest = await pool.query('SELECT NOW()');
     
     // This sends the answer back to your web browser
