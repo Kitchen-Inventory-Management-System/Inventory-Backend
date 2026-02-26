@@ -13,6 +13,7 @@ app.use(express.json());
 app.use('/auth', require('./routes/auth')); // Import auth routes
 app.use('/dashboard', require('./routes/middleware/dashboard'));
 app.use('/locations', require('./routes/locations'));
+app.use('/items', require('./routes/items'));
 
 // --- TEST ROUTE ---
 // When a browser asks for /test, this block of code runs.
