@@ -1,5 +1,5 @@
-const router = require("express").Router();
-const pool = require("../db");
+const router = require("express").Router(); // Express router to define routes for locations
+const pool = require("../db"); // Database connection pool
 const authorize = require("./middleware/authorize"); // Protects the route (the "bouncer")
 
 // GET: Fetch all locations for the logged-in user

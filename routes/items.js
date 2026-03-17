@@ -28,16 +28,16 @@ router.get("/", authorize, async (req, res) => {
 router.post("/", authorize, async (req, res) => {
   try {
     // 1. Grab data from frontend (Removed exact_loc, as it's not in your DB)
-    const { name, exp_date, quantity, location_id } = req.body;
+    const { name, exp_date, quantity, location_id, category_id } = req.body;
 
     // 2. The Non-Food Logic - If exp_date is an empty string, we want to store it as NULL in the database
     const finalExpDate = exp_date === "" ? null : exp_date;
 
     // 3. Insert into the database (Added user_id to match your schema!)
     const newItem = await pool.query(
-      `INSERT INTO items (name, exp_date, quantity, location_id, user_id) 
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [name, finalExpDate, quantity, location_id, req.user]
+      `INSERT INTO items (name, exp_date, quantity, location_id, category_id, user_id) 
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [name, finalExpDate, quantity, location_id, category_id, req.user]
     );
 
     res.json(newItem.rows[0]);
