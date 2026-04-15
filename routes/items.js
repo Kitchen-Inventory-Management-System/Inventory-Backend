@@ -8,13 +8,16 @@ router.get("/", authorize, async (req, res) => {
         // join items with locations to also get the location names in one query (if needed)
         // fetch all items that belong to the logged-in user, along with their location names
         const items = await pool.query(
-            `SELECT items.*, locations.name AS location_name
-             FROM items 
-             JOIN locations ON items.location_id = locations.id
-                WHERE items.user_id = $1`,
-            [req.user]
+          `SELECT 
+              items.*,
+              locations.name AS location_name,
+              categories.name AS category_name
+          FROM items
+          JOIN locations ON items.location_id = locations.id
+          LEFT JOIN categories ON items.category_id = categories.id
+          WHERE items.user_id = $1`,
+          [req.user]
         );
-
         // Send the array of items back to the frontend
         res.json(items.rows);
 
@@ -45,6 +48,29 @@ router.post("/", authorize, async (req, res) => {
   } catch (err) {
     console.error(err.message);
     res.status(500).json("Server Error creating item");
+  }
+});
+
+router.delete("/:id", authorize, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // First, we want to make sure the item belongs to the logged-in user
+    const item = await pool.query(
+      "SELECT * FROM items WHERE id = $1 AND user_id = $2",
+      [id, req.user]
+    );
+    if (item.rows.length === 0) {
+      return res.status(404).json("Item not found or you don't have permission to delete it");
+    }
+
+    // If we get here, it means the item exists and belongs to the user, so we can delete it
+    await pool.query("DELETE FROM items WHERE id = $1", [id]);
+    res.json("Item deleted successfully");
+    
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json("Server Error deleting item");
   }
 });
 
